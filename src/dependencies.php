@@ -26,3 +26,45 @@ $container['auth'] = function ($c) {
     $logger->pushHandler(new Monolog\Handler\StreamHandler($settings['path'], $settings['level']));
     return $logger;
 };
+
+// database
+$container['db'] = function ($c) {
+    $settings = $c->get('settings')['priv']['db'];
+    $db = new \Medoo([
+        'database_type' => 'mysql',
+        'database_name' => $settings['db'],
+        'server' => $settings['remote'],
+        'username' => $settings['user'],
+        'password' => $settings['pass'],
+     
+        // [optional] If you want to force Medoo to use dblib driver for connecting MSSQL database
+        // 'driver' => 'dblib'
+    ]);
+    return $db;
+};
+
+// ldap
+$container['ldap'] = function ($c) {
+    $settings = $c->get('settings')['priv']['ldap'];
+    $ldap = ldap_connect($settings['remote'], $settings['port']);
+
+    if (!$ldap)
+        throw new \Exception('LDAP invalid');
+    
+    ldap_set_option($ldap, LDAP_OPT_PROTOCOL_VERSION, 3);
+    ldap_set_option($ldap, LDAP_OPT_REFERRALS, 0);
+
+    if (!ldap_bind($ldap, $settings['bind_dn'], $settings['pass']))
+        throw new \Exception('LDAP creds invalid');
+    
+    return $ldap;
+};
+
+// OpenID Connect
+$container['iodc'] = function ($c) {
+    $settings = $c->get('settings')['priv']['oidc'];
+    $oidc = new OpenIDConnectClient($settings['remote'], $settings['app_id'], $settings['secret']);
+    $oidc->addAuthParam(array('response_mode' => 'form_post'));
+    $oidc->setRedirectURL($settings['redirect']);
+    return $oidc;
+};

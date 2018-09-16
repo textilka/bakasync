@@ -6,18 +6,24 @@ example config:
 return [
     'settings' => [
         'db' => [
-            'remote' => '[IP of Baka DB server]',
+            'remote' => '[IP or DN of Baka DB server]',
             'user'   => '[username with readonly privliages]',
             'pass'   => '[password]',
             'db'     => '[dabatase name]'
         ],
         'ldap' => [
-            'remote'  => '[IP of LDAP DB server]',
+            'remote'  => '[IP or DN of LDAP DB server]',
             'port'    => '[LDAP port]',
             'bind_dn' => '[DN of user with writ privilages]',
             'pass'    => '[password]',
             'search'  => '[search base]'
+        ],
+        'oidc' => [
+            'remote'   => '[DN of openID server]',
+            'app_id'   => '[client ID]',
+            'secret'   => '[client secret]',
+            'redirect' => '[redirect URL]'
         ]
     ],
 ];
-`
+```

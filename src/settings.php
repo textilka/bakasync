@@ -1,8 +1,8 @@
 <?php
-if (!is_file(__DIR__ . '../config/private_settings.php'))
+if (!is_file(__DIR__ . '../../conf/private_settings.php'))
     throw new Exception("Private settings not defined");
 
-$private_settings = require __DIR__ . '../config/private_settings.php';
+$private_settings = require __DIR__ . '../../conf/private_settings.php';
 return [
     'settings' => [
         'displayErrorDetails' => true, // set to false in production
@@ -19,7 +19,7 @@ return [
             'path' => isset($_ENV['docker']) ? 'php://stdout' : __DIR__ . '/../logs/app.log',
             'level' => \Monolog\Logger::DEBUG,
         ],
-        'conf' => $private_settings['settings'],
+        'priv' => $private_settings['settings'],
         
     ],
 ];

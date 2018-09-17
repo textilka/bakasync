@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>BakaSync</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom shadow-sm">
+    <a class="ml-md-3 text-dark mr-md-auto mb-2 mb-md-0" style="text-decoration: none;" href="/" aria-label="BakaSync">
+    <img src="assets/img/bakasync128.png" class="d-inline-block" style="margin-top: -6px" width="38px" />
+    <h5 class="d-inline-block font-weight-normal ml-1" style="margin-top: 6px">BakaSync</h5>
+    </a>
+    <?php if (/*$user->isLogged()*/false):?>
+    <nav class="my-2 my-md-0 mr-md-3">
+        <span class="p-2 text-dark" href="#"><?=$user->getUserData()['name']?></span>
+    </nav>
+    <a class="btn btn-outline-primary" href="logout">Odhlásit</a>
+    <?php else:?>
+    <a class="btn btn-outline-primary" href="login">Přihlásit</a>
+    <?php endif;?>
+</div>

@@ -15,8 +15,12 @@ $app->get('/login', function (Request $request, Response $response, array $args)
 
 $app->get('/[{name}]', function (Request $request, Response $response, array $args) {
     // Sample log message
-    $this->logger->info("Slim-Skeleton '/' route");
+    //$this->logger->info("Slim-Skeleton '/' route");
 
     // Render index view
+    //var_dump($this->db->select('zaci', ['JMENO', 'PRIJMENI', 'TRIDA']));
+
+    
+
     return $this->renderer->render($response, 'index.phtml', $args);
-});
+});//->add( new ExampleMiddleware());

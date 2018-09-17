@@ -23,5 +23,3 @@ class ExampleMiddleware
         return $response;
     }
 }
-
-$app->add( new ExampleMiddleware());

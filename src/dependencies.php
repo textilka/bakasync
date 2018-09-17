@@ -30,15 +30,12 @@ $container['auth'] = function ($c) {
 // database
 $container['db'] = function ($c) {
     $settings = $c->get('settings')['priv']['db'];
-    $db = new \Medoo([
-        'database_type' => 'mysql',
-        'database_name' => $settings['db'],
+    $db = new Medoo\Medoo([
         'server' => $settings['remote'],
+        'database_type' => 'mssql',
+        'database_name' => $settings['db'],
         'username' => $settings['user'],
-        'password' => $settings['pass'],
-     
-        // [optional] If you want to force Medoo to use dblib driver for connecting MSSQL database
-        // 'driver' => 'dblib'
+        'password' => $settings['pass']
     ]);
     return $db;
 };

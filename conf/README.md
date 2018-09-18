@@ -23,6 +23,9 @@ return [
             'app_id'   => '[client ID]',
             'secret'   => '[client secret]',
             'redirect' => '[redirect URL]'
+        ],
+        'url' => [
+            'app_base' => '[/bakasync for example]'
         ]
     ],
 ];

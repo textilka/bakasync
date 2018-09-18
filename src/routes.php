@@ -16,7 +16,7 @@ $app->get('/login', function (Request $request, Response $response, array $args)
 $app->get('/[{name}]', function (Request $request, Response $response, array $args) {
 
     
-    $URLBASE = $this['environment']['REDIRECT_BASE'] . "/";
+    $URLBASE = isset($this->get('settings')['priv']['url']['app_base']) ? $this->get('settings')['priv']['url']['app_base'] : $this['environment']['REDIRECT_BASE'] . "/";
     // Sample log message
     //$this->logger->info("Slim-Skeleton '/' route");
 

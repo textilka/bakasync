@@ -1,8 +1,8 @@
 <?php
-if (!is_file(__DIR__ . '../../conf/private_settings.php'))
+if (!is_file(__DIR__ . '/../conf/private_settings.php'))
     throw new Exception("Private settings not defined");
 
-$private_settings = require __DIR__ . '../../conf/private_settings.php';
+$private_settings = require __DIR__ . '/../conf/private_settings.php';
 return [
     'settings' => [
         'displayErrorDetails' => true, // set to false in production

@@ -5,8 +5,10 @@ use Slim\Http\Response;
 
 require __DIR__ . "/lib.php";
 
+$URLBASE = isset($settings['settings']['priv']['url']['app_base']) ? substr($settings['settings']['priv']['url']['app_base'], 0, -1) : '';
+
 // logged in
-$app->group('', function() {
+$app->group($URLBASE, function() {
     $this->get('/dashboard', function (Request $request, Response $response, array $args) {
 
         $ignore = [
@@ -45,7 +47,7 @@ $app->group('', function() {
 })->add(\middleware\auth::class);
 
 // not logged in
-$app->group('', function() {
+$app->group($URLBASE, function() {
     
     $this->get('/', function (Request $request, Response $response, array $args) {
         //$this->logger->info("Slim-Skeleton '/' route");
@@ -57,3 +59,7 @@ $app->group('', function() {
     })->setName('login');
 
 })->add(\middleware\login::class);
+
+$app->get($URLBASE, function (Request $request, Response $response, array $args) {
+    return $response->withRedirect($this->router->pathFor('login'), 301);
+});

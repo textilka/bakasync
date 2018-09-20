@@ -1,6 +1,6 @@
 <?php
 $settings = require __DIR__ . "/../src/settings.php";
-$URLBASE = isset($settings['priv']['url']['app_base']) ? $settings['priv']['url']['app_base'] : $_SERVER['REDIRECT_BASE'] . "/";
+$URLBASE = isset($settings['settings']['priv']['url']['app_base']) ? $settings['settings']['priv']['url']['app_base'] : $_SERVER['REDIRECT_BASE'] . "/";
 ?><!DOCTYPE html>
 <html lang="cs">
 <head>

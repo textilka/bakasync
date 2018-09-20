@@ -20,8 +20,9 @@ $app = new \Slim\App($settings);
 // Set up dependencies
 require __DIR__ . '/../src/dependencies.php';
 
-// Register middleware
-require __DIR__ . '/../src/middleware.php';
+$app->add($container->csrf);
+
+$app->add(\middleware\csrf::class);
 
 // Register routes
 require __DIR__ . '/../src/routes.php';

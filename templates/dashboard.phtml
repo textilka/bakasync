@@ -1,0 +1,365 @@
+<?php
+
+class generate {
+  function __construct($data) {
+    $this->stList = $data['studentsList'];
+    $this->teList = $data['teachersList'];
+
+    $this->countSTchange = count($this->stList['different']) + count($this->stList['onlyLDAP']) + count($this->stList['onlyBaka']);
+    $this->countTEchange = count($this->teList['different']) + count($this->teList['onlyLDAP']) + count($this->teList['onlyBaka']);
+  }
+
+  static function numLang($word, $number) {
+    $lang = [
+      "student" => [
+        0 => "studentů",
+        1 => "student",
+        2 => "studenti",
+        3 => "studenti",
+        4 => "studenti",
+        5 => "studentů",
+      ],
+      "učitel" => [
+        0 => "učitelů",
+        1 => "učitel",
+        2 => "učitelé",
+        3 => "učitelé",
+        4 => "učitelé",
+        5 => "učitelů"
+      ],
+      "vyžaduje" => [
+        0 => "nevyžaduje",
+        1 => "vyžaduje",
+        2 => "vyžadují",
+        3 => "vyžadují",
+        4 => "vyžadují",
+        5 => "vyžaduje"
+      ]
+    ];
+
+    if (!array_key_exists($word, $lang))
+      return $word;
+    if ($number >= count($lang[$word]))
+      return end($lang[$word]);
+    return $lang[$word][$number];
+  }
+  
+  function newsAlert() {
+    if ($this->countSTchange) {
+      $text = "<b>$this->countSTchange</b> " . $this::numLang("student", $this->countSTchange);
+      if ($this->countTEchange)
+        $text .= " a <b>$this->countTEchange</b> " . $this::numLang("učitel", $this->countTEchange);
+    } else if ($this->countTEchange) {
+      $text = "<b>$this->countTEchange</b> " . $this::numLang("učitel", $this->countTEchange);
+    } else {
+      return;
+    }
+    $text .= " " . $this::numLang("vyžaduje", max($this->countSTchange, $this->countTEchange));
+    return <<<EOL
+<div class="card border-danger mb-3">
+  <div class="card-body text-danger">
+    <h5 class="card-title">Upozornění</h5>
+    <p class="card-text">$text aktivitu</p>
+  </div>
+</div>
+
+EOL;
+  }
+
+  private static function genDl($givenname, $surname, $class = null, $wrong = []) {
+    $gd = $sd = $cd = null;
+    if (!is_null($wrong)) {
+      $gd = in_array("givenname", $wrong) ? ' text-danger' : '';
+      $sd = in_array("surname", $wrong) ? ' text-danger' : '';
+      $cd = in_array("class", $wrong) ? ' text-danger' : '';
+    }
+    $cltext = null;
+    if (!is_null($class))
+      $cltext = <<<EOL
+      <dt class="col-xl-3$cd">Třída</dt>
+      <dd class="col-xl-9$cd">$class</dd>
+EOL;
+    return <<<EOL
+    <dl class="row">
+      <dt class="col-xl-3$gd">Jméno</dt>
+      <dd class="col-xl-9$gd">$givenname</dd>
+      <dt class="col-xl-3$sd">Příjmení</dt>
+      <dd class="col-xl-9$sd">$surname</dd>
+$cltext
+    </dl>
+EOL;
+  }
+
+  private function card($user, $mode, $type = "student") {
+    if ($mode == 'baka') {
+      $givenname = trim($user['JMENO']);
+      $surname = trim($user['PRIJMENI']);
+      $class = $type == "student" ? trim($user['TRIDA']) : null;
+      $code = $user['INTERN_KOD'];
+      $codesh = $code;
+      $bakaText = $this::genDl($givenname, $surname, $class);
+      $ldapText = <<<EOL
+      <h6 class="text-danger">Nenalezeno</h6>
+EOL;
+      $actionText = "Vytvořit nového uživatele";
+    } else if ($mode == 'ldap') {
+      $givenname = $user['givenname'][0];
+      $surname = $user['sn'][0];
+      $class = $type == "student" ? substr_replace($user['department'][0], ".", 1, 0) : null;
+      if (array_key_exists('bakaid', $user)) {
+        $code = $user['bakaid'][0];
+      } else {
+        $code = base64_encode(explode(",", substr($user['dn'], 3))[0]);
+      }
+      $codesh = substr(md5($code), 0, 5);
+      $ldapText = $this::genDl($givenname, $surname, $class);
+      $bakaText = <<<EOL
+      <h6 class="text-danger">Nenalezeno</h6>
+EOL;
+      if (substr($class, 0, 1) == "4") {
+        $actionText = "Přesunout mezi absolventy";
+      } else {
+        $actionText = "Zakázat účet odpadlíka";
+      }
+    } else if ($mode == 'diff') {
+      $wrong = [];
+      if ($user['ldap']['givenname'][0] != trim($user['baka']['JMENO'])) {
+        $givenname = trim($user['baka']['JMENO']) . "/" . $user['ldap']['givenname'][0];
+        array_push($wrong, "givenname");
+      } else {
+        $givenname = $user['ldap']['givenname'][0];
+      }
+      
+      if ($user['ldap']['sn'][0] != trim($user['baka']['PRIJMENI'])) {
+        $surname = trim($user['baka']['PRIJMENI']) . "/" . $user['ldap']['sn'][0];
+        array_push($wrong, "surname");
+      } else {
+        $surname = $user['ldap']['sn'][0];
+      }
+      
+      if ($type == "student") {
+        if (substr_replace($user['ldap']['department'][0], ".", 1, 0) != trim($user['baka']['TRIDA'])) {
+          $class = trim($user['baka']['TRIDA']) . "/" . substr_replace($user['ldap']['department'][0], ".", 1, 0);
+          array_push($wrong, "class");
+        } else {
+          $class = trim($user['baka']['TRIDA']);
+        }
+      } else {$class = null;}
+      
+      $code = $user['ldap']['bakaid'][0];
+
+      $codesh = $code;
+      $ldapText = $this::genDl(
+        $user['ldap']['givenname'][0],
+        $user['ldap']['sn'][0],
+        substr_replace($user['ldap']['department'][0], ".", 1, 0),
+        $wrong
+      );
+      $bakaText = $this::genDl(
+        trim($user['baka']['JMENO']),
+        trim($user['baka']['PRIJMENI']),
+        trim($user['baka']['TRIDA'])
+      );
+      
+      $actionText = "Opravit informace";
+    } else {
+      return;
+    }
+
+    $classText = is_null($class) ? "" : " ($class)";
+
+    return <<<EOL
+    <div class="card">
+    <div class="card-header" id="hd$codesh">
+      <h6 class="mb-0">
+        <div class="form-check">
+          <input class="form-check-input position-static" type="checkbox" name="$code">
+          <label class="form-check-label" style="cursor: pointer;" data-toggle="collapse" data-target="#col$codesh" aria-expanded="false" aria-controls="col$code">$givenname $surname$classText</label>
+          <kbd class="float-right">$codesh</kbd>
+        </div>
+      </h6>
+    </div>
+    <div id="col$codesh" aria-labelledby="hd$codesh" class="collapse" data-parent="#acc$type">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-6">
+            <div class="card border-light mb-3">
+              <div class="card-header"><h5 class="my-0">Bakaláři</h5></div>
+              <div class="card-body pb-0">
+                $bakaText
+              </div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="card border-light mb-3">
+              <div class="card-header"><h5 class="my-0">LDAP</h5></div>
+              <div class="card-body pb-0">
+                $ldapText
+              </div>
+            </div>
+          </div>
+        </div>
+        <!--div class="card border-success">
+          <div class="card-body">
+            <p class="card-text d-inline-flex mb-0">Doporučená akce: <strong class="ml-1">$actionText</strong></p>
+            <button type="button" class="btn btn-success btn-sm float-right">Provést</button>
+          </div>
+        </div-->
+        <div class="alert alert-info d-flex" style="line-height: 31px;" role="alert">
+          Doporučená akce: <strong class="ml-1">$actionText</strong>
+          <button type="button" class="btn btn-success btn-sm ml-auto">Provést</button>
+        </div>
+      </div>
+    </div>
+  </div>
+EOL;
+  }
+
+  function studentsCards() {
+    $ret = "";
+    if (count($this->stList['different'])) {
+      $ret .= <<<EOL
+    <h1 class="display-4 mt-4 mb-3">Nejednotné údaje</h1>
+EOL;
+      foreach ($this->stList['different'] as $st) {
+        $ret .= $this->Card($st, 'diff');
+      }
+    }
+
+    if (count($this->stList['onlyLDAP'])) {
+      $ret .= <<<EOL
+    <h1 class="display-4 mt-4 mb-3">Pouze v LDAPu</h1>
+EOL;
+      foreach ($this->stList['onlyLDAP'] as $st) {
+        $ret .= $this->Card($st, 'ldap');
+      }
+    }
+
+    if (count($this->stList['onlyBaka'])) {
+      $ret .= <<<EOL
+    <h1 class="display-4 mt-4 mb-3">Pouze v Bakalářích</h1>
+EOL;
+      foreach ($this->stList['onlyBaka'] as $st) {
+        $ret .= $this->Card($st, 'baka');
+      }
+    }
+    return $ret;
+  }
+
+  function teachersCards() {
+    $ret = "";
+    if (count($this->teList['different'])) {
+      $ret .= <<<EOL
+    <h1 class="display-4 mt-4 mb-3">Nejednotné údaje</h1>
+EOL;
+      foreach ($this->teList['different'] as $st) {
+        $ret .= $this->Card($st, 'diff', 'teacher');
+      }
+    }
+
+    if (count($this->teList['onlyLDAP'])) {
+      $ret .= <<<EOL
+    <h1 class="display-4 mt-4 mb-3">Pouze v LDAPu</h1>
+EOL;
+      foreach ($this->teList['onlyLDAP'] as $st) {
+        $ret .= $this->Card($st, 'ldap', 'teacher');
+      }
+    }
+
+    if (count($this->teList['onlyBaka'])) {
+      $ret .= <<<EOL
+    <h1 class="display-4 mt-4 mb-3">Pouze v Bakalářích</h1>
+EOL;
+      foreach ($this->teList['onlyBaka'] as $st) {
+        $ret .= $this->Card($st, 'baka', 'teacher');
+      }
+    }
+    return $ret;
+  }
+}
+
+$generate = new generate($data);
+
+include "header.phtml"
+?>
+<div class="container">
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group mr-2">
+            <button class="btn btn-sm btn-outline-secondary" onclick="window.location.reload()">Aktualizovat</button>
+            <button class="btn btn-sm btn-outline-secondary">Export</button>
+        </div>
+    </div>
+</div>
+<div class="row">
+<div class="col-12 col-lg-10 col-md-9">
+<?=$generate->newsAlert()?>
+<div class="card">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="students-tab" data-toggle="tab" href="#students" role="tab" aria-controls="students" aria-selected="true"><?=ucfirst($generate::numLang("student", $generate->countSTchange))?> <span class="badge badge-dark"><?=$generate->countSTchange?></span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="teachers-tab" data-toggle="tab" href="#teachers" role="tab" aria-controls="teachers" aria-selected="false"><?=ucfirst($generate::numLang("učitel", $generate->countTEchange))?> <span class="badge badge-dark"><?=$generate->countTEchange?></span></a>
+      </li>
+    </ul>
+  </div>
+  <div class="card-body">
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="students" role="tabpanel" aria-labelledby="students-tab">
+
+    <div class="accordion" id="accstudent">
+      <?=$generate->studentsCards();?>
+      <div class="mt-3 d-flex alert alert-info" style="line-height: 31px" role="alert">
+        U zvolených studentů provést doporučené změny
+        <button type="button" class="btn btn-success btn-sm ml-auto">Provést</button>
+      </div>
+    </div>
+    </div>
+    <div class="tab-pane fade" id="teachers" role="tabpanel" aria-labelledby="teachers-tab">
+    <div class="accordion" id="accteacher">
+      <?=$generate->teachersCards();?>
+      <div class="mt-3 d-flex alert alert-info" style="line-height: 31px" role="alert">
+        U zvolených učitelů provést doporučené změny
+        <button type="button" class="btn btn-success btn-sm ml-auto">Provést</button>
+      </div>
+    </div>
+    </div>
+  </div>
+  </div>
+</div>
+</div>
+<div class="col-12 col-lg-2 col-md-3 mt-3 mt-md-0">
+<div class="card text-white bg-info mb-3">
+  <div class="card-header">Stav</div>
+  <div class="card-body">
+    <h5 class="card-title">V pořádku</h5>
+    <p class="card-text">
+      <b><?=count($data['studentsList']['correct'])?></b> <?=$generate->numLang("student", count($data['studentsList']['correct']))?><br />
+      <b><?=count($data['teachersList']['correct'])?></b> <?=$generate->numLang("učitel", count($data['teachersList']['correct']))?><br />
+    <hr>
+    <h5 class="card-title">Divných</h5>
+    <p class="card-text">
+      <b><?=count($data['studentsList']['different'])?></b> <?=$generate->numLang("student", count($data['studentsList']['different']))?><br />
+      <b><?=count($data['teachersList']['different'])?></b> <?=$generate->numLang("učitel", count($data['teachersList']['different']))?><br />
+    </p>
+    <hr>
+    <h5 class="card-title">Pouze v LDAPu</h5>
+    <p class="card-text">
+      <b><?=count($data['studentsList']['onlyLDAP'])?></b> <?=$generate->numLang("student", count($data['studentsList']['onlyLDAP']))?><br />
+      <b><?=count($data['teachersList']['onlyLDAP'])?></b> <?=$generate->numLang("učitel", count($data['teachersList']['onlyLDAP']))?><br />
+    </p>
+    <hr>
+    <h5 class="card-title">Pouze v Bakalářích</h5>
+    <p class="card-text">
+      <b><?=count($data['studentsList']['onlyBaka'])?></b> <?=$generate->numLang("student", count($data['studentsList']['onlyBaka']))?><br />
+      <b><?=count($data['teachersList']['onlyBaka'])?></b> <?=$generate->numLang("učitel", count($data['teachersList']['onlyBaka']))?><br />
+    </p>
+  </div>
+</div>
+</div>
+</div>
+</div>
+<?php include "footer.phtml"?>

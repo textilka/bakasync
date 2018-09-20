@@ -4,7 +4,7 @@
 $container = $app->getContainer();
 
 // view renderer
-$container['renderer'] = function ($c) {
+$container['view'] = function ($c) {
     $settings = $c->get('settings')['renderer'];
     return new Slim\Views\PhpRenderer($settings['template_path']);
 };
@@ -19,12 +19,9 @@ $container['logger'] = function ($c) {
 };
 
 // auth
-$container['auth'] = function ($c) {
-    $settings = $c->get('settings')['auth'];
-    $logger = new Monolog\Logger($settings['name']);
-    $logger->pushProcessor(new Monolog\Processor\UidProcessor());
-    $logger->pushHandler(new Monolog\Handler\StreamHandler($settings['path'], $settings['level']));
-    return $logger;
+$container['auth'] = function($c) {
+    $auth = new \auth($c);
+    return $auth;
 };
 
 // database
@@ -64,4 +61,18 @@ $container['iodc'] = function ($c) {
     $oidc->addAuthParam(array('response_mode' => 'form_post'));
     $oidc->setRedirectURL($settings['redirect']);
     return $oidc;
+};
+
+// flash messages
+$container['flash'] = function () {
+    return new \Slim\Flash\Messages();
+};
+
+$container['csrf'] = function ($c) {
+    $guard = new \Slim\Csrf\Guard();
+    $guard->setFailureCallable(function ($request, $response, $next) {
+        $request = $request->withAttribute("csrf_status", false);
+        return $next($request, $response);
+    });
+    return $guard;
 };

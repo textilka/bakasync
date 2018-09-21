@@ -1,0 +1,15 @@
+<?php include "header.phtml"?>
+<form method="post" action="<?=$router->pathFor('config')?>">
+    <input type="hidden" name="_METHOD" value="PUT" />
+    <input type="hidden" name="<?= $csrf['nameKey'] ?>" value="<?= $csrf['name'] ?>">
+    <input type="hidden" name="<?= $csrf['valueKey'] ?>" value="<?= $csrf['value'] ?>">
+<?php foreach ($conf as $key => $val):?>
+    <div class="form-group">
+    <label class="col-md-4 control-label" for="<?=$key?>"><?=$key?>:</label>
+        <div class="col-md-6">
+            <strong><input class="form-control" type="text" name="<?=$key?>" id="<?=$key?>" value="<?=$val?>" required autofocus></strong>
+        </div>
+    </div>
+<?php endforeach;?>
+</form>
+<?php include "footer.phtml"?>

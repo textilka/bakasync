@@ -12,20 +12,15 @@ return [
             'db'     => '[dabatase name]'
         ],
         'ldap' => [
-            'remote'  => '[IP or DN of LDAP DB server]',
+            'remote'  => '[IP or (N)FQDN of LDAP DB server]',
             'port'    => '[LDAP port]',
-            'bind_dn' => '[DN of user with writ privilages]',
+            'bind_dn' => '[DN of user with write privilages]',
             'pass'    => '[password]',
-            'search'  => '[search base]'
-        ],
-        'oidc' => [
-            'remote'   => '[DN of openID server]',
-            'app_id'   => '[client ID]',
-            'secret'   => '[client secret]',
-            'redirect' => '[redirect URL]'
-        ],
+            'search'  => '[search base]',
+            'domain'  => '[FQDN of domain root]'
+        ]
         'url' => [
-            'app_base' => '[/bakasync for example]'
+            'app_base' => '[set only if behind rewriteURL eg. /bakasync/]'
         ]
     ],
 ];

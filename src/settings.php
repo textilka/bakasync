@@ -20,6 +20,6 @@ return [
             'level' => \Monolog\Logger::DEBUG,
         ],
         'priv' => $private_settings['settings'],
-        
     ],
+    'urlbase' => (isset($settings['settings']['priv']['url']['app_base']) ? substr($settings['settings']['priv']['url']['app_base'], 0, -1) : ''),
 ];

@@ -3,63 +3,15 @@
 use Slim\Http\Request;
 use Slim\Http\Response;
 
-require __DIR__ . "/lib.php";
-
-$URLBASE = isset($settings['settings']['priv']['url']['app_base']) ? substr($settings['settings']['priv']['url']['app_base'], 0, -1) : '';
-
 // logged in
-$app->group($URLBASE, function() {
-    $this->get('/dashboard', function (Request $request, Response $response, array $args) {
-
-        $ignore = [
-            "CN=maturita,OU=Students,DC=textilniskola,DC=cz",
-            "CN=Tester Šiška,OU=Students,DC=textilniskola,DC=cz",
-            "CN=Prozapas,OU=Teachers,DC=textilniskola,DC=cz"
-        ];
-        
-        $studentsList = lib\getUserLists(
-            $this,
-            $this->get('settings')['priv']['ldap']['search']['students'],
-            "zaci",
-            $ignore
-        );
-
-        $teachersList = lib\getUserLists(
-            $this,
-            $this->get('settings')['priv']['ldap']['search']['teachers'],
-            "ucitele",
-            $ignore
-        );
-
-        $args['studentsList'] = $studentsList;
-        $args['teachersList'] = $teachersList;
-        
-
-        //only for testing so we don't bother LDAP and MSSQL
-        /*
-        require __DIR__ . "/../conf/test-data.php";
-        $args['studentsList'] = testData\students();
-        $args['teachersList'] = testData\teachers();
-        */
-
-        return $this->view->render($response, 'dashboard.phtml', $args);
-    })->setName('dashboard');
+$app->group($settings['urlbase'], function() {
+    $this->get('/dashboard', \controller\dashboard::class)->setName('dashboard');
+    $this->map(['get', 'put', 'delete'], "/user[/{id}]", \controller\user::class);
+    $this->map(['get', 'put'], "/config", \controller\config::class)->setName('config');
 })->add(\middleware\auth::class);
 
 // not logged in
-$app->group($URLBASE, function() {
-    
-    $this->get('/', function (Request $request, Response $response, array $args) {
-        //$this->logger->info("Slim-Skeleton '/' route");
-        return $response->withRedirect($this->router->pathFor('login'), 301);
-    });
-
-    $this->get('/login', function (Request $request, Response $response, array $args) {
-        return $this->view->render($response, 'login.phtml', $args);
-    })->setName('login');
-
+$app->group($settings['urlbase'], function() {
+    $this->get('/', controller\index::class);
+    $this->map(['get', 'post'], '/login', controller\login::class)->setName('login');
 })->add(\middleware\login::class);
-
-$app->get($URLBASE, function (Request $request, Response $response, array $args) {
-    return $response->withRedirect($this->router->pathFor('login'), 301);
-});

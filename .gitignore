@@ -3,3 +3,5 @@
 !/logs/README.md
 /conf/*
 !/conf/README.md
+/db/*
+composer.lock

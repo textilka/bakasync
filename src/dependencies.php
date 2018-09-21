@@ -5,8 +5,13 @@ $container = $app->getContainer();
 
 // view renderer
 $container['view'] = function ($c) {
+    global $container;
+    $templateVariables = [
+        "router" => $container->router,
+        /*"auth" => $container->auth*/
+    ];
     $settings = $c->get('settings')['renderer'];
-    return new Slim\Views\PhpRenderer($settings['template_path']);
+    return new Slim\Views\PhpRenderer($settings['template_path'], $templateVariables);
 };
 
 // monolog
@@ -37,6 +42,18 @@ $container['db'] = function ($c) {
     return $db;
 };
 
+// config database
+$container['conf'] = function ($c) {
+    $db = new Medoo\Medoo([
+        'database_type' => 'sqlite',
+	    'database_file' => __DIR__ . "/../db/config.db"
+    ]);
+    
+    // seed db
+    $db->query("CREATE TABLE IF NOT EXISTS conf (id INTEGER PRIMARY KEY AUTOINCREMENT, field TEXT NOT NULL, val TEXT NOT NULL);");
+    return $db;
+};
+
 // ldap
 $container['ldap'] = function ($c) {
     $settings = $c->get('settings')['priv']['ldap'];
@@ -52,15 +69,6 @@ $container['ldap'] = function ($c) {
         throw new \Exception('LDAP creds invalid');
     
     return $ldap;
-};
-
-// OpenID Connect
-$container['iodc'] = function ($c) {
-    $settings = $c->get('settings')['priv']['oidc'];
-    $oidc = new OpenIDConnectClient($settings['remote'], $settings['app_id'], $settings['secret']);
-    $oidc->addAuthParam(array('response_mode' => 'form_post'));
-    $oidc->setRedirectURL($settings['redirect']);
-    return $oidc;
 };
 
 // flash messages

@@ -2,6 +2,6 @@
 
 class auth {
     function logged() {
-        return true;
+        return false;
     }
 }

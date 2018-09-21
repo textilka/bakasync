@@ -1,11 +1,20 @@
 <?php include "header.phtml"?>
-<div class="container">
-<div class="px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
-      <h1 class="display-4">Přihlaste se, prosím</h1>
-      <p class="lead mt-4">
-        Aplikace BakaSync je přístupná pouze administrátorům.<br />
-        <span class="font-weight-normal">Pokud nevíte, jak jste se sem dostali, pak zde nemáte co dělat!</span>
-      </p>
-</div>
+<div class="text-center">
+<form class="form-signin" method="post" action="<?=$router->pathFor('login')?>">
+  <input type="hidden" name="_METHOD" value="POST" />
+  <input type="hidden" name="<?= $csrf['nameKey'] ?>" value="<?= $csrf['name'] ?>">
+  <input type="hidden" name="<?= $csrf['valueKey'] ?>" value="<?= $csrf['value'] ?>">
+  <h1 class="h3 mb-3 font-weight-normal">Přihlaste se, prosím</h1>
+  <label for="inputName" class="sr-only">Uživatelské jméno</label>
+  <input type="text" id="inputName" name="uname" class="form-control" placeholder="Uživatelské jméno" required autofocus>
+  <label for="inputPassword" class="sr-only">Heslo</label>
+  <input type="password" id="inputPassword" name="passw" class="form-control" placeholder="Heslo" required>
+  <button class="btn btn-lg btn-primary btn-block" type="submit">Přihlásit se</button>
+<?php if (is_array(@$error)):?>
+<?php foreach ($error as $message):?>
+  <h5 class="text-danger mt-5"><?=$message['message']?></h5>
+<?php endforeach;?>
+<?php endif;?>
+</form>
 </div>
 <?php include "footer.phtml"?>

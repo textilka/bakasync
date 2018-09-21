@@ -1,3 +1,4 @@
+/*
 function showGroupCard(cardName, elem) {
     groupCards = ["students", "teachers"];
     if (document.getElementById(cardName + "-group-card")) {
@@ -10,3 +11,4 @@ function showGroupCard(cardName, elem) {
     
     return false;
 }
+*/

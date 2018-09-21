@@ -10,13 +10,11 @@ class csrf {
         $this->container = $container;
     }
     public function __invoke($request, $response, $next) {
-        $args = $request->getAttribute('routeInfo')[2];
-        $path = $request->getAttribute('routeInfo')['request'][1];
         
-        $csrf_status = @$args['csrf_status'];
-        if ($csrf_status === false) {
-            $this->container->logger->addInfo("CSRF failed for " . $path);
-            $this->redirectWithMessage($response, "dashboard", "error", ["Communication error!", "Please try again"]);
+        $args = $request->getAttribute('routeInfo')[2];
+
+        if ($request->getAttribute('csrf_status') === false) {
+            $this->redirectWithMessage($response, "dashboard", "error", ["message" => "Chyba komunikace, zkuste to prosím znovu"]);
             return $response;
         } else {
             return $next($request, $response);

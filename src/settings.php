@@ -21,5 +21,5 @@ return [
         ],
         'priv' => $private_settings['settings'],
     ],
-    'urlbase' => (isset($settings['settings']['priv']['url']['app_base']) ? substr($settings['settings']['priv']['url']['app_base'], 0, -1) : ''),
+    'urlbase' => (isset($private_settings['settings']['url']['app_base']) ? substr($private_settings['settings']['url']['app_base'], 0, -1) : ''),
 ];

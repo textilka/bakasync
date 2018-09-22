@@ -35,8 +35,8 @@ $URLBASE = isset($settings['settings']['priv']['url']['app_base']) ? $settings['
     <nav class="my-2 my-md-0 mr-md-3">
         <span class="p-2 text-dark"><?=$auth->getUname()?></span>
     </nav>
-    <a class="btn btn-outline-primary" href="logout">Odhlásit</a>
+    <a class="btn btn-outline-primary" href="<?=$URLBASE?>logout">Odhlásit</a>
     <?php else:?>
-    <a class="btn btn-outline-primary" href="login">Přihlásit</a>
+    <a class="btn btn-outline-primary" href="<?=$URLBASE?>login">Přihlásit</a>
     <?php endif;?>
 </div>

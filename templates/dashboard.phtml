@@ -118,10 +118,11 @@ EOL;
       $class = $type == "student" ? substr_replace(@$user['department'][0], ".", 1, 0) : null;
       if (array_key_exists('bakaid', $user)) {
         $code = $user['bakaid'][0];
+        $codesh = $code;
       } else {
         $code = base64_encode(explode(",", substr($user['dn'], 3))[0]);
+        $codesh = substr(md5($code), 0, 5);
       }
-      $codesh = substr(md5($code), 0, 5);
       $ldapText = $this::genDl($givenname, $surname, $class);
       $bakaText = <<<EOL
       <h6 class="text-danger">Nenalezeno</h6>

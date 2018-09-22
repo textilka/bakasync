@@ -8,7 +8,7 @@ $container['view'] = function ($c) {
     global $container;
     $templateVariables = [
         "router" => $container->router,
-        /*"auth" => $container->auth*/
+        "auth" => $container->auth
     ];
     $settings = $c->get('settings')['renderer'];
     return new Slim\Views\PhpRenderer($settings['template_path'], $templateVariables);

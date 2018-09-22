@@ -31,9 +31,9 @@ $URLBASE = isset($settings['settings']['priv']['url']['app_base']) ? $settings['
     <img src="<?=$URLBASE?>assets/img/bakasync128.png" class="d-inline-block" style="margin-top: -6px" width="38px" />
     <h5 class="d-inline-block font-weight-normal ml-1" style="margin-top: 6px">BakaSync</h5>
     </a>
-    <?php if (/*$user->isLogged()*/false):?>
+    <?php if ($auth->logged()):?>
     <nav class="my-2 my-md-0 mr-md-3">
-        <span class="p-2 text-dark" href="#"><?=$user->getUserData()['name']?></span>
+        <span class="p-2 text-dark"><?=$auth->getUname()?></span>
     </nav>
     <a class="btn btn-outline-primary" href="logout">Odhlásit</a>
     <?php else:?>

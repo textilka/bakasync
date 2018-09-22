@@ -12,11 +12,15 @@ return [
             'db'     => '[dabatase name]'
         ],
         'ldap' => [
-            'remote'  => '[IP or (N)FQDN of LDAP DB server]',
+            'remote'  => '[IP or (N)FQDN of LDAP server]',
             'port'    => '[LDAP port]',
             'bind_dn' => '[DN of user with write privilages]',
             'pass'    => '[password]',
-            'search'  => '[search base]',
+            'search'  => [
+                'students' => '[search base for students]',
+                'teachers' => '[seatch base for teachers]',
+                'admins'   => '[seatch base for admins]'
+            ],
             'domain'  => '[FQDN of domain root]'
         ]
         'url' => [

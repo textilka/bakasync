@@ -13,6 +13,7 @@ $app->group($settings['urlbase'], function() {
 
 // not logged in
 $app->group($settings['urlbase'], function() {
+    $this->get('', controller\index::class)->setName('root');
     $this->get('/', controller\index::class)->setName('root');
     $this->map(['get', 'post'], '/login', controller\login::class)->setName('login');
 })->add(\middleware\login::class);

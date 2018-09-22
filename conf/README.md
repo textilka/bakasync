@@ -10,6 +10,7 @@ return [
             'user'   => '[username with readonly privliages]',
             'pass'   => '[password]',
             'db'     => '[dabatase name]'
+            'te_role' => ['[array of teacher roles in Bakalari]', '[učitel for example]']
         ],
         'ldap' => [
             'remote'  => '[IP or (N)FQDN of LDAP server]',

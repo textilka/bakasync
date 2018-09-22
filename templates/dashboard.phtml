@@ -9,6 +9,10 @@ class generate {
     $this->countTEchange = count($this->teList['different']) + count($this->teList['onlyLDAP']) + count($this->teList['onlyBaka']);
   }
 
+  const BAKA = 0;
+  const LDAP = 1;
+  const DIFF = 2;
+
   static function numLang($word, $number) {
     $lang = [
       "student" => [
@@ -49,10 +53,9 @@ class generate {
       $text = "<b>$this->countSTchange</b> " . $this::numLang("student", $this->countSTchange);
       if ($this->countTEchange)
         $text .= " a <b>$this->countTEchange</b> " . $this::numLang("učitel", $this->countTEchange);
-    } else if ($this->countTEchange) {
+    } else if ($this->countTEchange)
       $text = "<b>$this->countTEchange</b> " . $this::numLang("učitel", $this->countTEchange);
-    } else {
-      return <<<EOL
+    else return <<<EOL
 <div class="card border-success mb-3">
   <div class="card-body text-success">
     <h5 class="card-title">Konečně!</h5>
@@ -63,7 +66,6 @@ class generate {
   </div>
 </div>
 EOL;
-    }
     $text .= " " . $this::numLang("vyžaduje", max($this->countSTchange, $this->countTEchange));
     return <<<EOL
 <div class="card border-danger mb-3">
@@ -76,121 +78,91 @@ EOL;
 EOL;
   }
 
-  private static function genDl($givenname, $surname, $class = null, $wrong = []) {
-    $gd = $sd = $cd = null;
-    if (!is_null($wrong)) {
-      $gd = in_array("givenname", $wrong) ? ' text-danger' : '';
-      $sd = in_array("surname", $wrong) ? ' text-danger' : '';
-      $cd = in_array("class", $wrong) ? ' text-danger' : '';
+  private static function genDl($user, $type, $wrong = []) {
+    $wrongText = [];
+    foreach(['gn', 'sn', 'dp'] as $field) {
+      $wrongText[$field] = in_array($field, $wrong) ? ' text-ganger' : '';
     }
+
     $cltext = null;
-    if (!is_null($class))
+    if (!is_null($user['dp'])) {
+      $class = ucfirst($user['dp']);
+      $classText = ["Třída", "Povolání"][$type];
       $cltext = <<<EOL
-      <dt class="col-xl-3$cd">Třída</dt>
-      <dd class="col-xl-9$cd">$class</dd>
+      <dt class="col-xl-3{$wrongText['dp']}">$classText</dt>
+      <dd class="col-xl-9{$wrongText['dp']}">$class</dd>
 EOL;
+    }
     return <<<EOL
     <dl class="row">
-      <dt class="col-xl-3$gd">Jméno</dt>
-      <dd class="col-xl-9$gd">$givenname</dd>
-      <dt class="col-xl-3$sd">Příjmení</dt>
-      <dd class="col-xl-9$sd">$surname</dd>
+      <dt class="col-xl-3{$wrongText['gn']}">Jméno</dt>
+      <dd class="col-xl-9{$wrongText['gn']}">{$user['gn']}</dd>
+      <dt class="col-xl-3{$wrongText['sn']}">Příjmení</dt>
+      <dd class="col-xl-9{$wrongText['sn']}">{$user['sn']}</dd>
 $cltext
     </dl>
 EOL;
   }
 
-  private function card($user, $mode, $type = "student") {
-    if ($mode == 'baka') {
-      $givenname = @trim($user['JMENO']);
-      $surname = @trim($user['PRIJMENI']);
-      $class = $type == "student" ? trim(@$user['TRIDA']) : null;
-      $code = @$user['INTERN_KOD'];
-      $codesh = $code;
-      $bakaText = $this::genDl($givenname, $surname, $class);
-      $ldapText = <<<EOL
-      <h6 class="text-danger">Nenalezeno</h6>
-EOL;
-      $actionText = "Vytvořit nového uživatele";
-    } else if ($mode == 'ldap') {
-      $givenname = @$user['givenname'][0];
-      $surname = @$user['sn'][0];
-      $class = $type == "student" ? substr_replace(@$user['department'][0], ".", 1, 0) : null;
-      if (array_key_exists('bakaid', $user)) {
-        $code = $user['bakaid'][0];
-        $codesh = $code;
-      } else {
-        $code = base64_encode(explode(",", substr($user['dn'], 3))[0]);
-        $codesh = substr(md5($code), 0, 5);
-      }
-      $ldapText = $this::genDl($givenname, $surname, $class);
-      $bakaText = <<<EOL
-      <h6 class="text-danger">Nenalezeno</h6>
-EOL;
-      if (substr($class, 0, 1) == "4") {
-        $actionText = "Přesunout mezi absolventy";
-      } else {
-        $actionText = "Zakázat účet";
-      }
-    } else if ($mode == 'diff') {
-      $wrong = [];
-      if ($user['ldap']['givenname'][0] != trim($user['baka']['JMENO'])) {
-        $givenname = trim($user['baka']['JMENO']) . "/" . $user['ldap']['givenname'][0];
-        array_push($wrong, "givenname");
-      } else {
-        $givenname = $user['ldap']['givenname'][0];
-      }
-      
-      if ($user['ldap']['sn'][0] != trim($user['baka']['PRIJMENI'])) {
-        $surname = trim($user['baka']['PRIJMENI']) . "/" . $user['ldap']['sn'][0];
-        array_push($wrong, "surname");
-      } else {
-        $surname = $user['ldap']['sn'][0];
-      }
-      
-      if ($type == "student") {
-        if (substr_replace($user['ldap']['department'][0], ".", 1, 0) != trim($user['baka']['TRIDA'])) {
-          $class = trim($user['baka']['TRIDA']) . "/" . substr_replace($user['ldap']['department'][0], ".", 1, 0);
-          array_push($wrong, "class");
-        } else {
-          $class = trim($user['baka']['TRIDA']);
-        }
-      } else {$class = null;}
-      
-      $code = $user['ldap']['bakaid'][0];
+  private function getCode($user) {
+    if (array_key_exists('id', $user) && !is_null($user['id']))
+      return [$user['id'], $user['id']];
+    else {
+      if (array_key_exists('ldap', $user))
+        $code = base64_encode(explode(",", ldap_dn2ufn($user['ldap']['dn']))[0]);
+      else
+      $code = base64_encode(explode(",", ldap_dn2ufn($user['dn']))[0]);
+      return [$code, strtoupper(substr(md5($code), 0, 5))];
+    }
+  }
 
-      $codesh = $code;
-      $ldapText = $this::genDl(
-        $user['ldap']['givenname'][0],
-        $user['ldap']['sn'][0],
-        array_key_exists('department', $user['ldap']) ? substr_replace($user['ldap']['department'][0], ".", 1, 0):null,
-        $wrong
-      );
-      $bakaText = $this::genDl(
-        trim($user['baka']['JMENO']),
-        trim($user['baka']['PRIJMENI']),
-        array_key_exists('TRIDA', $user['baka'])?trim($user['baka']['TRIDA']):null
-      );
+  private function card($user, $mode, $type) {
+    if ($type != STUDENT && $type != TEACHER)
+      return false;
+
+    $code = $this->getCode($user);
+    if ($mode == $this::BAKA) {
+      $bakaText = $this::genDl($user, $type);
+      $ldapText = '<h6 class="text-danger">Nenalezeno</h6>';
+      $actionText = "Vytvořit nového uživatele";
+    } else if ($mode == $this::LDAP) {
+      $bakaText = '<h6 class="text-danger">Nenalezeno</h6>';
+      $ldapText = $this::genDl($user, $type);
+      $actionText = substr($user['dp'], 0, 1) == "4" ? "Přesunout mezi absolventy" : "Zakázat účet";
+    } else if ($mode == $this::DIFF) {
+      $wrong = [];
+      foreach(['gn', 'sn', 'dp'] as $field) {
+        if ($user['baka'][$field] != $user['ldap'][$field]) {
+          $user[$field] = $user['baka'][$field] . "/" . $user['ldap'][$field];
+          array_push($wrong, $field);
+        } else {
+          $user[$field] = $user['baka'][$field];
+        }
+      }
+      
+      $ldapText = $this::genDl($user['ldap'], $type, $wrong);
+      $bakaText = $this::genDl($user['baka'], $type);
       
       $actionText = "Opravit informace";
     } else {
-      return;
+      return false;
     }
 
-    $classText = is_null($class) ? "" : " ($class)";
+    $classText = is_null($user['dp']) ? "" : " (" . $user['dp'] . ")";
+    $typeText = ["student", "teacher"][$type];
 
     return <<<EOL
     <div class="card">
-    <div class="card-header" id="hd$codesh">
+    <div class="card-header" id="hd{$code[1]}">
       <h6 class="mb-0">
         <div class="form-check">
-          <input class="form-check-input position-static" type="checkbox" name="$code">
-          <label class="form-check-label" style="cursor: pointer;" data-toggle="collapse" data-target="#col$codesh" aria-expanded="false" aria-controls="col$code">$givenname $surname$classText</label>
-          <kbd class="float-right">$codesh</kbd>
+          <input class="form-check-input position-static" type="checkbox" name="{$code[0]}">
+          <label class="form-check-label" style="cursor: pointer;" data-toggle="collapse" data-target="#col{$code[1]}" aria-expanded="false" aria-controls="col{$code[0]}">{$user['gn']} {$user['sn']}$classText</label>
+          <kbd class="float-right">{$code[1]}</kbd>
         </div>
       </h6>
     </div>
-    <div id="col$codesh" aria-labelledby="hd$codesh" class="collapse" data-parent="#acc$type">
+    <div id="col{$code[1]}" aria-labelledby="hd{$code[1]}" class="collapse" data-parent="#acc$typeText">
       <div class="card-body">
         <div class="row">
           <div class="col-6">
@@ -229,29 +201,23 @@ EOL;
   function studentsCards() {
     $ret = "";
     if (count($this->stList['different'])) {
-      $ret .= <<<EOL
-    <h1 class="display-4 mt-4 mb-3">Nejednotné údaje</h1>
-EOL;
+      $ret .= '<h1 class="display-4 mt-4 mb-3">Nejednotné údaje</h1>';
       foreach ($this->stList['different'] as $st) {
-        $ret .= $this->Card($st, 'diff');
+        $ret .= $this->Card($st, $this::DIFF, STUDENT);
       }
     }
 
     if (count($this->stList['onlyLDAP'])) {
-      $ret .= <<<EOL
-    <h1 class="display-4 mt-4 mb-3">Pouze v LDAPu</h1>
-EOL;
+      $ret .= '<h1 class="display-4 mt-4 mb-3">Pouze v LDAPu</h1>';
       foreach ($this->stList['onlyLDAP'] as $st) {
-        $ret .= $this->Card($st, 'ldap');
+        $ret .= $this->Card($st, $this::LDAP, STUDENT);
       }
     }
 
     if (count($this->stList['onlyBaka'])) {
-      $ret .= <<<EOL
-    <h1 class="display-4 mt-4 mb-3">Pouze v Bakalářích</h1>
-EOL;
+      $ret .= '<h1 class="display-4 mt-4 mb-3">Pouze v Bakalářích</h1>';
       foreach ($this->stList['onlyBaka'] as $st) {
-        $ret .= $this->Card($st, 'baka');
+        $ret .= $this->Card($st, $this::BAKA, STUDENT);
       }
     }
     return $ret;
@@ -260,31 +226,26 @@ EOL;
   function teachersCards() {
     $ret = "";
     if (count($this->teList['different'])) {
-      $ret .= <<<EOL
-    <h1 class="display-4 mt-4 mb-3">Nejednotné údaje</h1>
-EOL;
+      $ret .= '<h1 class="display-4 mt-4 mb-3">Nejednotné údaje</h1>';
       foreach ($this->teList['different'] as $st) {
-        $ret .= $this->Card($st, 'diff', 'teacher');
+        $ret .= $this->Card($st, $this::DIFF, TEACHER);
       }
     }
 
     if (count($this->teList['onlyLDAP'])) {
-      $ret .= <<<EOL
-    <h1 class="display-4 mt-4 mb-3">Pouze v LDAPu</h1>
-EOL;
+      $ret .= '<h1 class="display-4 mt-4 mb-3">Pouze v LDAPu</h1>';
       foreach ($this->teList['onlyLDAP'] as $st) {
-        $ret .= $this->Card($st, 'ldap', 'teacher');
+        $ret .= $this->Card($st, $this::LDAP, TEACHER);
       }
     }
 
     if (count($this->teList['onlyBaka'])) {
-      $ret .= <<<EOL
-    <h1 class="display-4 mt-4 mb-3">Pouze v Bakalářích</h1>
-EOL;
+      $ret .= '<h1 class="display-4 mt-4 mb-3">Pouze v Bakalářích</h1>';
       foreach ($this->teList['onlyBaka'] as $st) {
-        $ret .= $this->Card($st, 'baka', 'teacher');
+        $ret .= $this->Card($st, $this::BAKA, TEACHER);
       }
     }
+
     return $ret;
   }
 }

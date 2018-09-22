@@ -11,6 +11,9 @@ if (PHP_SAPI == 'cli-server') {
 
 require __DIR__ . '/../vendor/autoload.php';
 
+define("STUDENT", 0);
+define("TEACHER", 1);
+
 session_start();
 
 // Instantiate the app

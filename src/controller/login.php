@@ -16,6 +16,7 @@ class login {
         } else if ($request->isPost()) {
             $postVars = $request->getParsedBody();
             if (!$this->container->auth->login($postVars['uname'], $postVars['passw'])) {
+                sleep(2);
                 $args['error'] = [['message' => $this->container->auth->getMessage()]];
                 return $this->sendResponse($request, $response, 'login.phtml', $args);
             }

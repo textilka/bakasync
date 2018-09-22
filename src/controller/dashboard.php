@@ -12,29 +12,29 @@ class dashboard {
     }
     function __invoke($request, $response, $args) {
         if ($request->isGet()) {
-            /*
+            
             $ignore = [
                 //will be gathered from internal config DB
             ];
             
             $studentsList = $this->getUserLists(
-                $this->get('settings')['priv']['ldap']['search']['students'],
+                $this->container->get('settings')['priv']['ldap']['search']['students'],
                 "zaci",
                 $ignore
             );
     
             $teachersList = $this->getUserLists(
-                $this->get('settings')['priv']['ldap']['search']['teachers'],
+                $this->container->get('settings')['priv']['ldap']['search']['teachers'],
                 "ucitele",
                 $ignore
             );
     
             $args['studentsList'] = $studentsList;
             $args['teachersList'] = $teachersList;
-            */
+            
     
             //only for testing so we don't bother LDAP and MSSQL
-            
+            /*
             require __DIR__ . "/../../conf/test-data.php";
             $args['studentsList'] = \testData\students();
             $args['teachersList'] = \testData\teachers();
@@ -58,7 +58,7 @@ class dashboard {
         if ($searchTable == 'zaci') {
             $db = $this->container->db->select('zaci', ['JMENO', 'PRIJMENI', 'TRIDA', 'INTERN_KOD']);
         } else if ($searchTable == 'ucitele') {
-            $db = $this->container->db->select('ucitele', ['JMENO', 'PRIJMENI', 'INTERN_KOD']);
+            $db = $this->container->db->select('ucitele', ['JMENO', 'PRIJMENI', 'INTERN_KOD'], ["FUNKCE[~]" => "učitel%"]);
         } else {
             return false;
         }
@@ -87,9 +87,9 @@ class dashboard {
             if ($bakaKey !== false) {
                 $bakaSt = $db[$bakaKey];
                 if (
-                    $student['givenname'][0] !== trim($bakaSt['JMENO']) ||
-                    $student['sn'][0] !== trim($bakaSt['PRIJMENI']) ||
-                    $student['department'][0] !== str_replace(".", "", trim($bakaSt['TRIDA']))
+                    @$student['givenname'][0] !== trim(@$bakaSt['JMENO']) ||
+                    @$student['sn'][0] !== trim(@$bakaSt['PRIJMENI']) ||
+                    (@$student['department'][0] !== str_replace(".", "", trim(@$bakaSt['TRIDA'])) && $searchTable == 'zaci')
                 ) {
                     array_push($ldapChange, [
                         "ldap" => $student,

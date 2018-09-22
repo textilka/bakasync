@@ -102,10 +102,10 @@ EOL;
 
   private function card($user, $mode, $type = "student") {
     if ($mode == 'baka') {
-      $givenname = trim($user['JMENO']);
-      $surname = trim($user['PRIJMENI']);
-      $class = $type == "student" ? trim($user['TRIDA']) : null;
-      $code = $user['INTERN_KOD'];
+      $givenname = @trim($user['JMENO']);
+      $surname = @trim($user['PRIJMENI']);
+      $class = $type == "student" ? trim(@$user['TRIDA']) : null;
+      $code = @$user['INTERN_KOD'];
       $codesh = $code;
       $bakaText = $this::genDl($givenname, $surname, $class);
       $ldapText = <<<EOL
@@ -113,9 +113,9 @@ EOL;
 EOL;
       $actionText = "Vytvořit nového uživatele";
     } else if ($mode == 'ldap') {
-      $givenname = $user['givenname'][0];
-      $surname = $user['sn'][0];
-      $class = $type == "student" ? substr_replace($user['department'][0], ".", 1, 0) : null;
+      $givenname = @$user['givenname'][0];
+      $surname = @$user['sn'][0];
+      $class = $type == "student" ? substr_replace(@$user['department'][0], ".", 1, 0) : null;
       if (array_key_exists('bakaid', $user)) {
         $code = $user['bakaid'][0];
       } else {
@@ -129,7 +129,7 @@ EOL;
       if (substr($class, 0, 1) == "4") {
         $actionText = "Přesunout mezi absolventy";
       } else {
-        $actionText = "Zakázat účet odpadlíka";
+        $actionText = "Zakázat účet";
       }
     } else if ($mode == 'diff') {
       $wrong = [];
@@ -162,13 +162,13 @@ EOL;
       $ldapText = $this::genDl(
         $user['ldap']['givenname'][0],
         $user['ldap']['sn'][0],
-        substr_replace($user['ldap']['department'][0], ".", 1, 0),
+        array_key_exists('department', $user['ldap']) ? substr_replace($user['ldap']['department'][0], ".", 1, 0):null,
         $wrong
       );
       $bakaText = $this::genDl(
         trim($user['baka']['JMENO']),
         trim($user['baka']['PRIJMENI']),
-        trim($user['baka']['TRIDA'])
+        array_key_exists('TRIDA', $user['baka'])?trim($user['baka']['TRIDA']):null
       );
       
       $actionText = "Opravit informace";

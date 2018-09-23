@@ -52,6 +52,12 @@ $container['auth'] = function($c) {
 // database
 $container['db'] = function ($c) {
     $settings = $c->conf->data;
+
+    $op = @fsockopen($settings['/db/remote'], 1433, $errno, $errstr, 2);
+    if (!$op)
+        return null;
+    else fclose($op);
+
     try {
         $db = new Medoo\Medoo([
             'server' => $settings['/db/remote'],
@@ -69,6 +75,12 @@ $container['db'] = function ($c) {
 // ldap
 $container['ldap'] = function ($c) {
     $settings = $c->conf->data;
+
+    $op = @fsockopen($settings['/ldap/remote'], $settings['/ldap/port'], $errno, $errstr, 2);
+    if (!$op)
+        return null;
+    else fclose($op);
+
     $ldap = ldap_connect($settings['/ldap/remote'], $settings['/ldap/port']);
 
     if (!$ldap)

@@ -60,7 +60,7 @@ class auth {
         ldap_set_option($ldap, LDAP_OPT_REFERRALS, 0);
 
         if (@ldap_bind($ldap, $uname . "@" . $settings['/ldap/domain'], $passw)) {
-            $userDN = $this->getDN($ldap, $uname, $settings['/ldap/search']['admins']);
+            $userDN = $this->getDN($ldap, $uname, $settings['/ldap/search/admins']);
             if (!$userDN) {
                 $this->message = "Nemáte oprávnění pro tuto akci";
                 return false;

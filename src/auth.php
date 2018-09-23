@@ -47,20 +47,20 @@ class auth {
             return false;
         }
 
-        $settings = $this->container->get('settings')['priv']['ldap'];
+        $settings = $this->container->conf->data;
 
-        if (!$this->serviceping($settings['remote'], $settings['port'])) {
+        if (!$this->serviceping($settings['/ldap/remote'], $settings['/ldap/port'])) {
             $this->message = "Server je nedostupný, zkuste to později";
             return false;
         }
 
-        $ldap = ldap_connect($settings['remote'], $settings['port']);
+        $ldap = ldap_connect($settings['/ldap/remote'], $settings['/ldap/port']);
         
         ldap_set_option($ldap, LDAP_OPT_PROTOCOL_VERSION, 3);
         ldap_set_option($ldap, LDAP_OPT_REFERRALS, 0);
 
-        if (@ldap_bind($ldap, $uname . "@" . $settings['domain'], $passw)) {
-            $userDN = $this->getDN($ldap, $uname, $settings['search']['admins']);
+        if (@ldap_bind($ldap, $uname . "@" . $settings['/ldap/domain'], $passw)) {
+            $userDN = $this->getDN($ldap, $uname, $settings['/ldap/search']['admins']);
             if (!$userDN) {
                 $this->message = "Nemáte oprávnění pro tuto akci";
                 return false;

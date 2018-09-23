@@ -5,8 +5,13 @@ class generate {
     $this->stList = $data['studentsList'];
     $this->teList = $data['teachersList'];
 
-    $this->countSTchange = count($this->stList['different']) + count($this->stList['onlyLDAP']) + count($this->stList['onlyBaka']);
-    $this->countTEchange = count($this->teList['different']) + count($this->teList['onlyLDAP']) + count($this->teList['onlyBaka']);
+    if (is_null($data['studentsList']) || is_null($data['teachersList'])) {
+      $this->countSTchange = 0;
+      $this->countTEchange = 0;
+    } else {
+      $this->countSTchange = count($this->stList['different']) + count($this->stList['onlyLDAP']) + count($this->stList['onlyBaka']);
+      $this->countTEchange = count($this->teList['different']) + count($this->teList['onlyLDAP']) + count($this->teList['onlyBaka']);
+    }
   }
 
   const BAKA = 0;
@@ -256,7 +261,23 @@ include "header.phtml"
 ?>
 <div class="container">
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Dashboard</h1>
+    <h1 class="h2">Dashboard
+<?php
+if (is_array(@$error)):
+    foreach ($error as $message):
+?>
+    <small class="text-danger ml-3"><?=$message['message']?></small>
+<?php
+    endforeach;
+elseif(is_array(@$success)):
+    foreach ($success as $message):
+?>
+    <small class="text-muted ml-3"><?=$message['message']?></small>
+<?php
+    endforeach;
+endif;
+?>
+    </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group mr-2">
             <button class="btn btn-sm btn-outline-secondary" onclick="window.location.reload()">Aktualizovat</button>

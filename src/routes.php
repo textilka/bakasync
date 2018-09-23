@@ -4,7 +4,7 @@ use Slim\Http\Request;
 use Slim\Http\Response;
 
 // logged in
-$app->group($settings['urlbase'], function() {
+$app->group(URLBASE, function() {
     $this->get('/dashboard', \controller\dashboard::class)->setName('dashboard');
     $this->get('/logout', \controller\logout::class)->setName('logout');
     $this->map(['get', 'put', 'delete'], "/user[/{id}]", \controller\user::class);
@@ -12,7 +12,7 @@ $app->group($settings['urlbase'], function() {
 })->add(\middleware\auth::class);
 
 // not logged in
-$app->group($settings['urlbase'], function() {
+$app->group(URLBASE, function() {
     $this->get('', controller\index::class)->setName('root');
     $this->get('/', controller\index::class)->setName('root');
     $this->map(['get', 'post'], '/login', controller\login::class)->setName('login');

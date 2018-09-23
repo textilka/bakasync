@@ -13,8 +13,13 @@ class dashboard {
     function __invoke($request, $response, $args) {
         if ($request->isGet()) {
             
-            $args['studentsList'] = $this->getUserLists(STUDENT);
-            $args['teachersList'] = $this->getUserLists(TEACHER);
+            if (!is_null($this->container->db)) {
+                $args['studentsList'] = $this->getUserLists(STUDENT);
+                $args['teachersList'] = $this->getUserLists(TEACHER);
+            } else {
+                $args['studentsList'] = null;
+                $args['teachersList'] = null;
+            }
             
             //only for testing so we don't bother LDAP and MSSQL
             /*
@@ -52,7 +57,7 @@ class dashboard {
             }, $this->container->db->select(
                 'ucitele',
                 ['JMENO', 'PRIJMENI', 'FUNKCE', 'INTERN_KOD'],
-                ["FUNKCE[~]" => array_map(function ($e) {return $e . "%";}, $this->container->get('settings')['priv']['db']['te_role'])]
+                ["FUNKCE[~]" => array_map(function ($e) {return $e . "%";}, explode(PHP_EOL, $this->container->conf->data['/db/roles']))]
             ));
         } else {
             return false;
@@ -60,7 +65,7 @@ class dashboard {
 
         $sr = \ldap_search(
             $this->container->ldap,
-            $this->container->get('settings')['priv']['ldap']['search'][['students', 'teachers'][$type]],
+            $this->container->conf->data['/ldap/search/' . ['students', 'teachers'][$type]],
             "(&(objectclass=user)(objectcategory=person))",
             ['givenName', 'sn', 'department', 'bakaID']
         );
@@ -79,7 +84,7 @@ class dashboard {
             ];
         }, $ldap);
 
-        $ldapIgnore = $this->container->get('settings')['priv']['ldap']['ignoreDN'];
+        $ldapIgnore = explode(PHP_EOL, $this->container->conf->data['/ldap/ignore']);
 
         $bakaRem = $db;
         $ldapRem = $ldap;
@@ -116,6 +121,9 @@ class dashboard {
                 unset($bakaRem[$bakaKey]);
             }
         }
+
+        if (!is_array($ldapRem)) $ldapRep = [];
+        if (!is_array($bakaRem)) $bakaRep = [];
 
         return [
             "correct" => $ldapCorrect,

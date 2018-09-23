@@ -3,6 +3,26 @@
 
 $container = $app->getContainer();
 
+// config database
+$container['conf'] = function ($c) {
+    $db = new Medoo\Medoo([
+        'database_type' => 'sqlite',
+	    'database_file' => __DIR__ . "/../db/config.db"
+    ]);
+    
+    // seed db
+    $db->query("CREATE TABLE IF NOT EXISTS conf (id INTEGER PRIMARY KEY AUTOINCREMENT, field TEXT NOT NULL, val TEXT NOT NULL);");
+
+    $confDB = [];
+    foreach ($db->select('conf', '*') as $data) {
+        $confDB[$data['field']] = $data['val'];
+    }
+
+    $db->data = $confDB;
+    
+    return $db;
+};
+
 // view renderer
 $container['view'] = function ($c) {
     global $container;
@@ -31,42 +51,34 @@ $container['auth'] = function($c) {
 
 // database
 $container['db'] = function ($c) {
-    $settings = $c->get('settings')['priv']['db'];
-    $db = new Medoo\Medoo([
-        'server' => $settings['remote'],
-        'database_type' => 'mssql',
-        'database_name' => $settings['db'],
-        'username' => $settings['user'],
-        'password' => $settings['pass']
-    ]);
-    return $db;
-};
-
-// config database
-$container['conf'] = function ($c) {
-    $db = new Medoo\Medoo([
-        'database_type' => 'sqlite',
-	    'database_file' => __DIR__ . "/../db/config.db"
-    ]);
-    
-    // seed db
-    $db->query("CREATE TABLE IF NOT EXISTS conf (id INTEGER PRIMARY KEY AUTOINCREMENT, field TEXT NOT NULL, val TEXT NOT NULL);");
-    return $db;
+    $settings = $c->conf->data;
+    try {
+        $db = new Medoo\Medoo([
+            'server' => $settings['/db/remote'],
+            'database_type' => 'mssql',
+            'database_name' => $settings['/db/db'],
+            'username' => $settings['/db/user'],
+            'password' => $settings['/db/_pass']
+        ]);
+        return $db;
+    } catch (PDOException $e) {
+        return null;
+    }
 };
 
 // ldap
 $container['ldap'] = function ($c) {
-    $settings = $c->get('settings')['priv']['ldap'];
-    $ldap = ldap_connect($settings['remote'], $settings['port']);
+    $settings = $c->conf->data;
+    $ldap = ldap_connect($settings['/ldap/remote'], $settings['/ldap/port']);
 
     if (!$ldap)
-        throw new \Exception('LDAP invalid');
+        return null;
     
     ldap_set_option($ldap, LDAP_OPT_PROTOCOL_VERSION, 3);
     ldap_set_option($ldap, LDAP_OPT_REFERRALS, 0);
 
-    if (!ldap_bind($ldap, $settings['bind_dn'], $settings['pass']))
-        throw new \Exception('LDAP creds invalid');
+    if (!ldap_bind($ldap, $settings['/ldap/bind_dn'], $settings['/ldap/_pass']))
+        return null;
     
     return $ldap;
 };

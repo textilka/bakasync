@@ -30,7 +30,7 @@ class setup {
         ],
         'url' => [
             '_desc'    => 'Aplikace',
-            'app_base' => 'URL adresa (př.: /bakasync/)'
+            'app_base' => 'URL adresa (obvykle již nastaveno instalátorem)'
         ]
     ];
 

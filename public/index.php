@@ -25,7 +25,7 @@ require __DIR__ . '/../src/dependencies.php';
 
 $app->add(\middleware\csrf::class);
 $app->add($container->csrf);
-define("URLBASE", strlen(@$container->conf->data['/url/app_base']) > 0 ? substr($container->conf->data['/url/app_base'], 0, -1) : '');
+define("URLBASE", strlen(@$container->conf->data['/url/app_base']) > 0 ? $container->conf->data['/url/app_base'] : '');
 
 // Register routes
 require __DIR__ . '/../src/routes.php';

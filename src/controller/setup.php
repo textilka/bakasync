@@ -30,7 +30,7 @@ class setup {
         ],
         'url' => [
             '_desc'    => 'Aplikace',
-            'app_base' => 'URL adresa (obvykle již nastaveno instalátorem)'
+            'app_base' => 'URL adresa<br /><small>obvykle již nastaveno instalátorem</small>'
         ]
     ];
 

@@ -66,7 +66,7 @@ class auth {
                 return false;
             }
             
-            if (!$this->checkGroup($ldap, $userDN, "CN=Domain Admins,CN=Users,DC=" . str_replace(".", ",DC=", $settings['domain']))) {
+            if (!$this->checkGroup($ldap, $userDN, "CN=Domain Admins,CN=Users,DC=" . str_replace(".", ",DC=", $settings['/ldap/domain']))) {
                 $this->message = "Nemáte oprávnění pro tuto akci";
                 return false;
             }

@@ -146,24 +146,24 @@ if (!$nocomposer) {
 ifterm();
 write("Závislosti nainstalovány, pokračuji");
 
+write("Odhaduji nastavení mod_rewrite");
+$uri = $_SERVER['REQUEST_URI'];
+$self = $_SERVER['PHP_SELF'];
+if ($uri == $self) {
+    write("mod_rewrite patrně neaktivní. Doporučuji nasměrovat root serveru do složky /public", "warn");
+    $urlbase = "";
+} else {
+    write("mod_rewrite patrně aktivní. Odhaduji cestu");
+    $urlbase = substr($uri, 0, strpos($uri, $self));
+    write("<b>$urlbase</b>", "info");
+}
+ifterm();
+write("Cesta odhadnuta, pokračuji");
+
 write("Nastavuji databázi");
 if (is_dir(__DIR__ . "/../db")) {
     write("Složka /db existuje, uvažuji aktualizaci programu", "warn");
 } else {
-    write("Odhaduji nastavení mod_rewrite");
-    $uri = $_SERVER['REQUEST_URI'];
-    $self = $_SERVER['PHP_SELF'];
-    if ($uri == $self) {
-        write("mod_rewrite patrně neaktivní. Doporučuji nasměrovat root serveru do složky /public", "warn");
-        $urlbase = "";
-    } else {
-        write("mod_rewrite patrně aktivní. Odhaduji cestu");
-        $urlbase = substr($uri, 0, strpos($uri, $self));
-        write("<b>$urlbase</b>", "info");
-    }
-    ifterm();
-    write("Cesta odhadnuta, pokračuji");
-
     write("Vytvářím databázi");
     mkdir(__DIR__ . "/../db");
     write("Připojuji se k databázi");

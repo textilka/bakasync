@@ -155,7 +155,7 @@ if ($uri == $self) {
 } else {
     write("mod_rewrite patrně aktivní. Odhaduji cestu");
     $urlbase = substr($uri, 0, strpos($uri, $self));
-    write("cesta odhadnuta na <b>$urlbase</b>", "info");
+    write("<b>$urlbase</b>", "info");
 }
 ifterm();
 write("Cesta odhadnuta, pokračuji");

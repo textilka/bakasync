@@ -113,11 +113,12 @@ EOL;
     if (array_key_exists('id', $user) && !is_null($user['id']))
       return [$user['id'], $user['id']];
     else {
-      if (array_key_exists('ldap', $user))
-        $code = base64_encode(explode(",", ldap_dn2ufn($user['ldap']['dn']))[0]);
-      else
-      $code = base64_encode(explode(",", ldap_dn2ufn($user['dn']))[0]);
-      return [$code, strtoupper(substr(md5($code), 0, 5))];
+      if (array_key_exists('baka', $user))
+        return [$user['baka']['id'], $user['baka']['id']];
+      else {
+        $code = base64_encode(trim(explode("=", explode(",", $user['dn'])[0])[1]));
+        return [$code, strtoupper(substr(md5($code), 0, 5))];
+      }
     }
   }
 
@@ -126,14 +127,17 @@ EOL;
       return false;
 
     $code = $this->getCode($user);
+    $user_to = $mode == $this::DIFF ? $user['baka'] : $user;
     if ($mode == $this::BAKA) {
       $bakaText = $this::genDl($user, $type);
       $ldapText = '<h6 class="text-danger">Nenalezeno</h6>';
       $actionText = "Vytvořit nového uživatele";
+      $action = 'add';
     } else if ($mode == $this::LDAP) {
       $bakaText = '<h6 class="text-danger">Nenalezeno</h6>';
       $ldapText = $this::genDl($user, $type);
       $actionText = substr($user['dp'], 0, 1) == "4" ? "Přesunout mezi absolventy" : "Zakázat účet";
+      $action = 'rem';
     } else if ($mode == $this::DIFF) {
       $wrong = [];
       foreach(['gn', 'sn', 'dp'] as $field) {
@@ -149,6 +153,7 @@ EOL;
       $bakaText = $this::genDl($user['baka'], $type);
       
       $actionText = "Opravit informace";
+      $action = 'mod';
     } else {
       return false;
     }
@@ -195,8 +200,9 @@ EOL;
         </div-->
         <div class="alert alert-info d-flex" style="line-height: 31px;" role="alert">
           Doporučená akce: <strong class="ml-1">$actionText</strong>
-          <button type="button" class="btn btn-success btn-sm ml-auto">Provést</button>
+          <button type="button" onclick="return send('$action', '{$code[0]}', '$typeText', '{$user_to['gn']}', '{$user_to['sn']}', '{$user_to['dp']}');" class="btn btn-success btn-sm ml-auto">Provést</button>
         </div>
+        </form>
       </div>
     </div>
   </div>
@@ -361,4 +367,27 @@ endif;
 </div>
 </div>
 </div>
+<form id="form" method="post">
+  <input type="hidden" name="_METHOD" value="PUT" />
+  <input type="hidden" name="<?= $csrf['nameKey'] ?>" value="<?= $csrf['name'] ?>">
+  <input type="hidden" name="<?= $csrf['valueKey'] ?>" value="<?= $csrf['value'] ?>">
+  <input type="hidden" name="mode" id="form_mode">
+  <input type="hidden" name="type" id="form_type">
+  <input type="hidden" name="gn" id="form_gn">
+  <input type="hidden" name="sn" id="form_sn">
+  <input type="hidden" name="dp" id="form_dp">
+</form>
+<script>
+const formTarget = "<?=$URLBASE . "action"?>";
+function send(mode, id, type, gn, sn, dp) {
+  $("#form_mode").val(mode);
+  $("#form_type").val(type);
+  $("#form_gn").val(gn);
+  $("#form_sn").val(sn);
+  $("#form_dp").val(dp);
+  $("#form").attr("action", formTarget + "/" + id);
+  $("#form").submit();
+  return false;
+}
+</script>
 <?php include "footer.phtml"?>

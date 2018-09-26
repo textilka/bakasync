@@ -25,11 +25,11 @@ class action extends controller {
     }
 
     function __invoke ($request, $response, $args) {
-        if ($request->isPost()) {
+        if ($request->isPut()) {
             $postVars = $request->getParsedBody();
 
-            if (is_string(@$postVars['mode']) || strlen($postVars['mode']) != 3)
-                return $response->redirectWithMessage($response, "dashboard", "error", "Chyba komunikace");
+            if (!is_string(@$postVars['mode']) || strlen($postVars['mode']) != 3)
+                return $this->redirectWithMessage($response, "dashboard", "error", "Chyba komunikace");
             
             if ($args['id'] == "all") {
                 //assuming batch mode
@@ -37,7 +37,7 @@ class action extends controller {
             }
 
             if (!is_string(@$postVars['type']) || ($postVars['type'] != "student" && $postVars['type'] != "teacher")) {
-                return $response->redirectWithMessage($response, "dashboard", "error", "Chyba komunikace");
+                return $this->redirectWithMessage($response, "dashboard", "error", "Chyba komunikace");
             }
             $type = $postVars['type'] == "student" ? STUDENT : TEACHER;
 
@@ -47,10 +47,10 @@ class action extends controller {
 
                 case "mod":
                     if (!is_string(@$postVars['gn']) || !is_string(@$postVars['sn']) || !is_string(@$postVars['dp']))
-                        return $response->redirectWithMessage($response, "dashboard", "error", "Chyba komunikace");
+                        return $this->redirectWithMessage($response, "dashboard", "error", "Chyba komunikace");
 
-                    if (($id = $this->listSearch($userList['different']['ldap'], $args['id'])) !== false) {
-                        $dn = $userList['different']['ldap']['dn'];
+                    if (($id = array_search($args['id'], array_column(array_column($userList['different'], 'ldap'), 'id'))) !== false) {
+                        $dn = $userList['different'][$id]['ldap']['dn'];
                         $mail = $this->getSAM($postVars['gn'], $postVars['sn'], $type) . "@" . $this->container->conf->data['/ldap/domain'];
                         if ($this->ldap_log("mod", $dn, [
                             "givenname" => $postVars['gn'],
@@ -58,25 +58,25 @@ class action extends controller {
                             "department" => $postVars['dp'],
                             "mail" => $mail,
                             "displayname" => $postVars['gn'] . " " . $postVars['sn'],
-                            "cn" => $postVars['gn'] . " " . $postVars['sn'],
+                            "cn" => implode(" ", $this->cleanName($postVars['gn'], $postVars['sn'])),
                             "samaccountname" => $this->getSAM($postVars['gn'], $postVars['sn'], $type),
                             "userprincipalname" => $mail
                         ])) {
-                            return $response->redirectWithMessage($response, "dashboard", "success", "Uživatel aktualizován");
+                            return $this->redirectWithMessage($response, "dashboard", "success", "Uživatel aktualizován");
                         } else {
-                            return $response->redirectWithMessage($response, "dashboard", "error", "Změna uživatele selhala");
+                            return $this->redirectWithMessage($response, "dashboard", "error", "Změna uživatele selhala");
                         }
                     } else {
-                        return $response->redirectWithMessage($response, "dashboard", "error", "Uživatel nenalezen");
+                        return $this->redirectWithMessage($response, "dashboard", "error", "Uživatel nenalezen");
                     }
                     break;
 
                 case "add":
                     if (!is_string(@$postVars['gn']) || !is_string(@$postVars['sn']) || !is_string(@$postVars['dp']))
-                        return $response->redirectWithMessage($response, "dashboard", "error", "Chyba komunikace");
+                        return $this->redirectWithMessage($response, "dashboard", "error", "Chyba komunikace");
 
-                    if (($id = $this->listSearch($userList['onlyBaka'], $args['id'])) !== false) {
-                        $dn = "CN=" . $this->getSAM($postVars['gn'], $postVars['sn'], $type) . "," . $type == STUDENT ? $this->container->conf->data['/ldap/search/students'] : $this->container->conf->data['/ldap/search/teachers'];
+                    if (array_search($args['id'], array_column($userList['onlyBaka'], "id")) !== false) {
+                        $dn = "CN=" . $this->getSAM($postVars['gn'], $postVars['sn'], $type) . "," . ($type == STUDENT ? $this->container->conf->data['/ldap/search/students'] : $this->container->conf->data['/ldap/search/teachers']);
                         
                         $mail = $this->getSAM($postVars['gn'], $postVars['sn'], $type) . "@" . $this->container->conf->data['/ldap/domain'];
                         if ($this->ldap_log("add", $dn, [
@@ -85,30 +85,30 @@ class action extends controller {
                             "department" => $postVars['dp'],
                             "mail" => $mail,
                             "displayname" => $postVars['gn'] . " " . $postVars['sn'],
-                            "cn" => $postVars['gn'] . " " . $postVars['sn'],
+                            "cn" => implode(" ", $this->cleanName($postVars['gn'], $postVars['sn'])),
                             "samaccountname" => $this->getSAM($postVars['gn'], $postVars['sn'], $type),
                             "userprincipalname" => $mail,
-                            "bakaid" => $userList['onlyBaka'][$id]['id']
+                            "bakaid" => $args['id']
                         ])) {
-                            return $response->redirectWithMessage($response, "dashboard", "success", "Uživatel přidán");
+                            return $this->redirectWithMessage($response, "dashboard", "success", "Uživatel přidán");
                         } else {
-                            return $response->redirectWithMessage($response, "dashboard", "error", "Přidání uživatele selhalo");
+                            return $this->redirectWithMessage($response, "dashboard", "error", "Přidání uživatele selhalo");
                         }
                     } else {
-                        return $response->redirectWithMessage($response, "dashboard", "error", "Uživatel nenalezen");
+                        return $this->redirectWithMessage($response, "dashboard", "error", "Uživatel nenalezen");
                     }
                     break;
 
                 case "rem":
-                    if (($id = $this->listSearch($userList['onlyLDAP'], $args['id'])) !== false) {
-                        $dn = $userList['onlyLDAP']['dn'];
+                    $dn = "CN=" . base64_decode($args['id']) . "," . ($type == STUDENT ? $this->container->conf->data['/ldap/search/students'] : $this->container->conf->data['/ldap/search/teachers']);
+                    if (array_search($dn, array_column($userList['onlyLDAP'], "dn")) !== false) {
                         if ($this->ldap_log("rem", $dn)) {
-                            return $response->redirectWithMessage($response, "dashboard", "success", "Uživatel zakázán");
+                            return $this->redirectWithMessage($response, "dashboard", "success", "Uživatel zakázán");
                         } else {
-                            return $response->redirectWithMessage($response, "dashboard", "error", "Zakázání uživatele selhalo");
+                            return $this->redirectWithMessage($response, "dashboard", "error", "Zakázání uživatele selhalo");
                         }
                     } else {
-                        return $response->redirectWithMessage($response, "dashboard", "error", "Uživatel nenalezen");
+                        return $this->redirectWithMessage($response, "dashboard", "error", "Uživatel nenalezen");
                     }
                     break;
 
@@ -119,23 +119,29 @@ class action extends controller {
         return $request;
     }
 
-    private function getSAM($gn, $sn, $type) {
-        $remove = "/[\s,\.-_]/";
-        return preg_replace($remove, "", strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $gn))) . 
-               ($type == STUDENT ? "_" : ".") . 
-               preg_replace($remove, "", strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $sn)));
+    private function cleanName($gn, $sn) {
+        return [
+            explode(" ", preg_replace("/[-,\.]/", " ", $gn))[0],
+            @end(explode(" ", preg_replace("/[-,\.]/", " ", $sn)))
+        ];
     }
 
-    private function listSearch(array $list, string $id) {
-        return array_search($id, array_column($list, "id"));
+    private function getSAM($gn, $sn, $type) {
+        $remove = "/[\s,\.-_']/";
+        $name = $this->cleanName($gn, $sn);
+        return preg_replace($remove, "", strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $name[0]))) . 
+               ($type == STUDENT ? "_" : ".") . 
+               preg_replace($remove, "", strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $name[1])));
     }
 
     private function ldap_log(string $action, string $dn, array $args = null) {
-        $message = $action . " " . $dn . (is_null($args) ? "" : " " . print_r($args, true));
+        $message = $action . " " . $dn . (is_null($args) ? "" : " " . json_encode($args));
         $this->container->conf->insert("ldap_log", ["source" => __FILE__, "msg" => $message]);
 
-        if ($this::TEST)
-            return true;
+        if ($this::TEST) {
+            echo $message;
+            exit;
+        }
         
         switch ($action) {
             case "add":

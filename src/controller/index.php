@@ -2,15 +2,13 @@
 
 namespace controller;
 
-class index {
+class index extends controller {
 
-    use \traits\sendResponse;
-
-    protected $container;
-    function __construct(\Slim\Container $container) {
-        $this->container = $container;
+    function __construct ($container) {
+        parent::__construct($container);
     }
-    function __invoke($request, $response, $args) {
+
+    function __invoke ($request, $response, $args) {
         if ($request->isGet()) {
             return $this->sendResponse($request, $response, 'index.phtml', $args);
         }

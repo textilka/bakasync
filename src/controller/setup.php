@@ -2,7 +2,7 @@
 
 namespace controller;
 
-class setup {
+class setup extends controller {
 
     public const FIELDS = [
         'db' => [
@@ -34,14 +34,12 @@ class setup {
         ]
     ];
 
-    use \traits\sendResponse;
-
-    protected $container;
-    function __construct(\Slim\Container $container) {
-        $this->container = $container;
+    function __construct ($container) {
+        parent::__construct($container);
         $this->seed($this::FIELDS);
     }
-    function __invoke($request, $response, $args) {
+
+    function __invoke ($request, $response, $args) {
         if ($this->container->conf->get('conf', 'val', ['field' => 'setup']) == "true")
             return $response->withRedirect($this->container->router->pathFor("root", $args), 301);
 

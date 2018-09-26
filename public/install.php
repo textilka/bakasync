@@ -189,7 +189,7 @@ if (array_key_exists('REDIRECT_BASE', $_SERVER))
 else if (array_key_exists('BASE', $_SERVER))
     $linkbase = $_SERVER['BASE'];
 else 
-    $linkbase = substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], "install.php"));
+    $linkbase = substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], "install.php") - 1);
 
 $link = "http://" . $_SERVER['HTTP_HOST'] . $linkbase;
 if (@file_get_contents("$link/test") == "OK") {

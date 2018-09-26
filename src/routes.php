@@ -18,4 +18,7 @@ $app->group(URLBASE, function() {
     $this->get('', controller\index::class)->setName('root');
     $this->get('/', controller\index::class)->setName('root');
     $this->map(['get', 'post'], '/login', controller\login::class)->setName('login');
+    $this->get('/test', function(request $request, response $response, $args) {
+        return $response->write("OK");
+    });
 })->add(\middleware\login::class);

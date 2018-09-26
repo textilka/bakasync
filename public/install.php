@@ -4,12 +4,12 @@ $ob_out = "";
 $continue = true;
 $nogit = false;
 $nocomposer = false;
-$originuri = "https://github.com/textilka/bakasync.git";
+$originuri = "https://github.com/textilka/bakasync";
 $git_update = "git fetch --all && git reset --hard origin/master";
 
 $requiredExtensions = ["openssl", "ldap", "pdo_sqlite", "sqlsrv", "pdo_sqlsrv"];
 
-write("<b>Spouštím neinteractivní instalační script BakaSync</b>");
+write("<b>Spouštím neinteraktivní instalační script BakaSync</b>");
 write("Spouštím kontrolu prostředí");
 
 write("Kontrola verze PHP >= 7.0.0");
@@ -30,7 +30,7 @@ foreach ($requiredExtensions as $ext) {
 }
 
 ifterm();
-write("Všechna rozšíření nalezena, pokračuji");
+write("Všechna potřebná rozšíření nalezena, pokračuji");
 
 write("Kontrola <b>exec</b> funkce");
 if(!function_exists('exec')) {
@@ -38,7 +38,7 @@ if(!function_exists('exec')) {
     $nogit = true;
     $nocomposer = true;
 } else {
-    write("exec funkce povolena");
+    write("Funkce exec povolena");
     write("Kontrola composer");
     if (substr(exec("composer --version"), 0, 8) != "Composer") {
         write("Composer nenalezen (nebo není v PATH). Instaluji..", "info");
@@ -47,15 +47,15 @@ if(!function_exists('exec')) {
         $composer_hash = file_get_contents("https://composer.github.io/installer.sig");
         if (hash_file('SHA384', 'composer-setup.php') === $composer_hash) {
             if (write_exec("php composer-setup.php") !== 0) {
-                write("Instalace composer selhala. Končím.", "danger");
-                $continue = false;
+                write("Instalace composer selhala, přeskakuji", "danger");
+                $nocomposer = true;
             }
             unlink("composer-setup.php");
         }
         chdir("public");
     }
     ifterm();
-    write("Composer nainstalován, pokračuji");
+    $nocomposer ? null : write("Composer nainstalován, pokračuji");
     write("Konstrola git");
     if (substr(exec("git --version"), 0, 3) != "git") {
         write("Git nenalezen (nebo není v PATH). Služba git deploy nebude k dispozici. Pokračuji", "warn");
@@ -72,46 +72,46 @@ if (!$nogit) {
     if(is_dir(__DIR__ . "/../.git")) {
         write("Jsme v git repu, kontroluji origin");
         if (write_exec("git remote get-url origin", null, $origin) !== 0) {
-            write("Kontrola origin selhala, pokračuji");
+            write("Kontrola origin selhala, přeskakuji");
             goto endgit;
         }
-        if ($origin[0] == $originuri) {
-            write("Používáme originální repo, aktualizuji");
+        if ($origin[0] == $originuri || $origin[0] == $originuri . ".git") {
+            write("Používáme oficiální repo, aktualizuji");
             if (write_exec($git_update) !== 0) {
-                write("Aktualizace selhala, pokračuji", $warn);
+                write("Aktualizace selhala, přeskakuji", $warn);
                 goto endgit;
             }
         } else if (substr($origin[0], 0, 5) == "fatal") {
-            write("origin nenalezen, nastavuji", "info");
+            write("Origin nenalezen, nastavuji", "info");
             if (write_exec("git remote add origin $originuri")) {
-                write("Přidání origin selhalo, pokračuji", $warn);
+                write("Přidání origin selhalo, přeskakuji", $warn);
                 goto endgit;
             }
             write("Aktualizuji");
             if (write_exec($git_update) !== 0) {
-                write("Aktualizace selhala, pokračuji", $warn);
+                write("Aktualizace selhala, přeskakuji", $warn);
                 goto endgit;
             }
         } else {
-            write("Používáme neoriginální repo, přeskakuji aktualizaci", "warn");
+            write("Používáme neoficiální repo, přeskakuji aktualizaci", "warn");
         }
     } else {
         write("Nejsme v repu, zakládám");
         chdir("../");
         if (write_exec("git init") !== 0) {
-            write("Vytvoření repa selhalo, pokračuji", $warn);
+            write("Vytvoření repa selhalo, přeskakuji", $warn);
             chdir("public");
             goto endgit;
         }
         chdir("public");
         write("nastavuji origin", "info");
         if (write_exec("git remote add origin $originuri") !== 0) {
-            write("Přidání origin selhalo, pokračuji", $warn);
+            write("Přidání origin selhalo, přeskakuji", $warn);
             goto endgit;
         }
         write("aktualizuji");
         if (write_exec($git_update) !== 0) {
-            write("Aktualizace selhala, pokračuji", $warn);
+            write("Aktualizace selhala, přeskakuji", $warn);
             goto endgit;
         }
     }
@@ -137,7 +137,7 @@ if (!$nocomposer) {
     chdir("public");
 } else {
     if (is_dir(__DIR__ . "/../vendor")) {
-        write("Složka vendor nalezena, předpokládám manuální instalaci závislostí");
+        write("Nalezena složka vendor, předpokládám že závislosti byly manuálně nainstalovány");
     } else {
         write("Závislosti nelze nainstalovat. Končím.");
         $continue = false;
@@ -150,19 +150,17 @@ write("Odhaduji nastavení mod_rewrite");
 $uri = $_SERVER['REQUEST_URI'];
 $self = $_SERVER['PHP_SELF'];
 if ($uri == $self) {
-    write("mod_rewrite patrně neaktivní. Doporučuji nasměrovat root serveru do složky /public", "warn");
+    write("Mod_rewrite patrně neaktivní. Doporučuji nasměrovat root serveru do složky /public", "warn");
     $urlbase = "";
 } else {
-    write("mod_rewrite patrně aktivní. Odhaduji cestu");
+    write("Mod_rewrite patrně aktivní. Odhaduji cestu");
     $urlbase = substr($uri, 0, strpos($uri, $self));
-    write("<b>$urlbase</b>", "info");
+    write("Cesta odhadnuta na <info>$urlbase</info>, pokračuji");
 }
-ifterm();
-write("Cesta odhadnuta, pokračuji");
 
 write("Nastavuji databázi");
 if (is_dir(__DIR__ . "/../db")) {
-    write("Složka /db existuje, uvažuji aktualizaci programu", "warn");
+    write("Složka /db existuje, zachovávám stávající konfiguraci", "warn");
 } else {
     write("Vytvářím databázi");
     mkdir(__DIR__ . "/../db");
@@ -177,6 +175,7 @@ if (is_dir(__DIR__ . "/../db")) {
 
     } catch (PDOException $e) {
         write($e->getMessage(), "danger");
+        write("Chyba databáze, Končím.");
         $continue = false;
     }
 }
@@ -184,9 +183,30 @@ ifterm();
 write("Nastavení databáze dokončeno, pokračuji");
 
 $move_to = __DIR__ . "/../src";
-write("Instalace dokončena. Přesouvám instalační script do " . realpath($move_to) . "/install.php");
-rename(__FILE__, realpath($move_to) . "/install.php");
-write("<a href='$urlbase/setup'>Pokračovat k nastavení</a>");
+write("Instalace dokončena, testuji nastavení");
+if (array_key_exists('REDIRECT_BASE', $_SERVER))
+    $linkbase = $_SERVER['REDIRECT_BASE'];
+else if (array_key_exists('BASE', $_SERVER))
+    $linkbase = $_SERVER['BASE'];
+else 
+    $linkbase = substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], "install.php"));
+
+$link = "http://" . $_SERVER['HTTP_HOST'] . $linkbase . "/" . $urlbase;
+$link = substr($link, -1) == "/" ? substr($link, 0, -1) : $link;
+if (@file_get_contents("$link/test") == "OK") {
+    write("Test nastavení byl úspěšný");
+    write("Přesouvám instalační script do " . realpath($move_to) . "/install.php");
+    rename(__FILE__, realpath($move_to) . "/install.php");
+    write("<a href='$link/setup'>Pokračovat k nastavení</a>");
+} else {
+    write("Test nastavení nebyl úspěšný.", "danger");
+    write("Server <b>$link/test" . "</b> odpověděl");
+    write($http_response_header[0]);
+    write("Manuálně nastavte URLBASE v /public/index.php");
+}
+
+$continue = false;
+ifterm();
 
 function write_exec($command, $sev = null, &$output = null) {
     write("$ " . $command, "code");
@@ -233,5 +253,3 @@ $ob_out
 HTML;
     exit;
 }
-$continue = false;
-ifterm();

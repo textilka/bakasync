@@ -7,9 +7,8 @@ use Slim\Http\Response;
 $app->group(URLBASE, function() {
     $this->get('/dashboard', \controller\dashboard::class)->setName('dashboard');
     $this->get('/logout', \controller\logout::class)->setName('logout');
-    $this->map(['get', 'put', 'delete'], "/user[/{id}]", \controller\user::class);
     $this->map(['get', 'put'], "/config", \controller\config::class)->setName('config');
-    //$this->map(['put'], "/action", \controller\action::class)->setName('action');
+    $this->map(['put'], "/action/{id}", \controller\action::class)->setName('action');
 })->add(\middleware\auth::class);
 
 // not logged in

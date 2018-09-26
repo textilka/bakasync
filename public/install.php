@@ -170,6 +170,7 @@ if (is_dir(__DIR__ . "/../db")) {
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         write("Vytvářím tabulky");
         $db->exec("CREATE TABLE IF NOT EXISTS conf (id INTEGER PRIMARY KEY AUTOINCREMENT, field TEXT NOT NULL, val TEXT NOT NULL);");
+        $db->exec("CREATE TABLE IF NOT EXISTS ldap_log (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL, msg TEXT NOT NULL, t TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
         write("Osazuji tabulky");
         $db->exec("INSERT INTO conf (id, field, val) VALUES(1, '/url/app_base', '$urlbase');");
 

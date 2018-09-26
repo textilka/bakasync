@@ -10,8 +10,9 @@ $container['conf'] = function ($c) {
 	    'database_file' => __DIR__ . "/../db/config.db"
     ]);
     
-    // seed db
+    // seed db after updates
     $db->query("CREATE TABLE IF NOT EXISTS conf (id INTEGER PRIMARY KEY AUTOINCREMENT, field TEXT NOT NULL, val TEXT NOT NULL);");
+    $db->exec("CREATE TABLE IF NOT EXISTS ldap_log (id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL, msg TEXT NOT NULL, t TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
 
     $confDB = [];
     foreach ($db->select('conf', '*') as $data) {

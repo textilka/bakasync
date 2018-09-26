@@ -191,8 +191,7 @@ else if (array_key_exists('BASE', $_SERVER))
 else 
     $linkbase = substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], "install.php"));
 
-$link = "http://" . $_SERVER['HTTP_HOST'] . $linkbase . "/" . $urlbase;
-$link = substr($link, -1) == "/" ? substr($link, 0, -1) : $link;
+$link = "http://" . $_SERVER['HTTP_HOST'] . $linkbase;
 if (@file_get_contents("$link/test") == "OK") {
     write("Test nastavení byl úspěšný");
     write("Přesouvám instalační script do " . realpath($move_to) . "/install.php");

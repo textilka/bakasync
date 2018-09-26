@@ -192,7 +192,9 @@ else
     $linkbase = substr($_SERVER['REQUEST_URI'], 0, strpos($_SERVER['REQUEST_URI'], "install.php") - 1);
 
 $link = "http://" . $_SERVER['HTTP_HOST'] . $linkbase;
-if (@file_get_contents("$link/test") == "OK") {
+
+$context = stream_context_create(['http' => ['header'=>"Cookie: " . http_build_query($_COOKIE, '', '; ')]]);
+if (@file_get_contents("$link/test", false, $context) == "OK") {
     write("Test nastavení byl úspěšný");
     write("Přesouvám instalační script do " . realpath($move_to) . "/install.php");
     rename(__FILE__, realpath($move_to) . "/install.php");

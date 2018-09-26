@@ -17,9 +17,13 @@ trait sendResponse {
             ]
         ], $this->container->flash->getMessages());
         $response = $this->container->view->render($response, $page, $args);
+        return $response;
     }
     protected function redirectWithMessage (&$response, $namedRoute, $message, $content, $args = []) {
+        if (!is_array($content))
+            $content = ["message" => $content];
         $this->container->flash->addMessage($message, $content);
         $response = $response->withRedirect($this->container->router->pathFor($namedRoute, $args), 301);
+        return $response;
     }
 }
